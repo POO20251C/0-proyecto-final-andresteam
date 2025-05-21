@@ -1,13 +1,15 @@
 #ifndef PERSONAJE_H
 #define PERSONAJE_H
-
 #include <string>
-#include <iostream>
 
 class Personaje {
 protected:
     std::string nombre;
-    int hp, atk, def, spd, lck;
+    int hp;
+    int atk;
+    int def;
+    int spd;
+    int lck;
 
 public:
     Personaje(std::string nombre, int hp, int atk, int def, int spd, int lck);
@@ -16,12 +18,14 @@ public:
     virtual bool estaVivo() const;
     virtual void mostrarStats() const;
 
-    int getSPD() const { return spd; }
-    int getHP() const { return hp; }
-    int getLCK() const { return lck; }
-    std::string getNombre() const { return nombre; }
+    std::string getNombre() const;
+    int getHP() const;
+    int getATK() const;
+    int getDEF() const;
+    int getSPD() const;
+    int getLCK() const;
 
+    void aumentarEstadisticasPorcentual(float porcentajeATK, float porcentajeDEF);
     virtual ~Personaje() {}
 };
-
 #endif //PERSONAJE_H
