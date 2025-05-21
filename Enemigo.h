@@ -10,7 +10,9 @@ private:
 
 public:
     Enemigo(std::string nombre, std::string tipo, int hp, int atk, int def, int spd, int lck);
+
     std::string getTipo() const;
+    void mostrarStats() const override;
 };
 
 #endif //ENEMIGO_H
