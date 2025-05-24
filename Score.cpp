@@ -1,24 +1,32 @@
-#include <sstream>
 #include "Score.h"
-using namespace std;
 
-Score::Score(string alias, string fechaHora, int salaMax, int saludPerdida)
-    : alias(alias), fechaHora(fechaHora), salaMax(salaMax), saludPerdida(saludPerdida) {}
+// Constructor por defecto
+Score::Score() : alias(""), salaMax(0), saludPerdida(0) {
+    auto now = std::chrono::system_clock::now();
+    std::time_t t = std::chrono::system_clock::to_time_t(now);
+    std::tm tm = *std::localtime(&t);
+    std::stringstream ss;
+    ss << std::put_time(&tm, "%Y-%m-%d %H:%M:%S");
+    fechaHora = ss.str();
+}
 
-string Score::getAlias() const { return alias; }
-string Score::getFechaHora() const { return fechaHora; }
-int Score::getSalaMax() const { return salaMax; }
-int Score::getSaludPerdida() const { return saludPerdida; }
+Score::Score(std::string alias, int salaMax, int saludPerdida)
+    : alias(alias), salaMax(salaMax), saludPerdida(saludPerdida) {
+    auto now = std::chrono::system_clock::now();
+    std::time_t t = std::chrono::system_clock::to_time_t(now);
+    std::tm tm = *std::localtime(&t);
+    std::stringstream ss;
+    ss << std::put_time(&tm, "%Y-%m-%d %H:%M:%S");
+    fechaHora = ss.str();
+}
 
-string Score::toString() const {
-    stringstream ss;
-    ss << alias << " | " << fechaHora << " | Sala alcanzada: " << salaMax
-       << " | Salud perdida: " << saludPerdida;
+std::string Score::toString() const {
+    std::stringstream ss;
+    ss << alias << " | " << fechaHora << " | Sala: " << salaMax << " | Salud perdida: " << saludPerdida;
     return ss.str();
 }
 
 bool Score::operator<(const Score& other) const {
-    if (salaMax != other.salaMax)
-        return salaMax > other.salaMax; // Más salas es mejor
-    return saludPerdida < other.saludPerdida; // Menos daño es mejor
+    if (salaMax != other.salaMax) return salaMax > other.salaMax;
+    return saludPerdida < other.saludPerdida;
 }
