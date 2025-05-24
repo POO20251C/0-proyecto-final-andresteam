@@ -1,8 +1,12 @@
-//
-// Created by andre on 23/05/2025.
-//
-
 #ifndef UTILIDAD_H
 #define UTILIDAD_H
+
+#include <limits>
+#include <iostream>
+
+inline void limpiarBuffer() {
+    std::cin.clear();
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+}
 
 #endif //UTILIDAD_H
