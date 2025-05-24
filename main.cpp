@@ -1,94 +1,140 @@
 #include <iostream>
 #include <vector>
 #include <ctime>
-#include <iomanip>
-#include <sstream>
+#include <cstdlib>
+#include <limits>
+#include <algorithm> // Para std::random_shuffle
 #include "Heroe.h"
-#include "Enemigo.h"
-#include "Item.h"
-#include "Sala.h"
 #include "Mazmorra.h"
-#include "Score.h"
 #include "ScoreManager.h"
+
 using namespace std;
 
-string obtenerFechaHoraActual() {
-    time_t now = time(nullptr);
-    tm* localTime = localtime(&now);
-    stringstream ss;
-    ss << put_time(localTime, "%Y-%m-%d_%H:%M");
-    return ss.str();
-}
+// --- Prototipos de funciones nuevas ---
+vector<Heroe> crearPoolHeroes();
+vector<Heroe*> seleccionarHeroes(vector<Heroe>& pool);
+void mostrarHeroesDisponibles(const vector<Heroe>& heroes);
+void limpiarBuffer();
 
 int calcularSaludPerdidaTotal(const vector<Heroe*>& heroes) {
     int perdida = 0;
     for (const auto& h : heroes) {
-        perdida += (60 - h->getHP()); // asumimos HP inicial 60
+        perdida += (h->getHPMaximo() - h->getHP());
     }
     return perdida;
 }
 
 void mostrarMenuPrincipal() {
-    cout << "===============================\n";
+    cout << "\n===============================\n";
     cout << "     B I E N V E N I D O       \n";
     cout << "       NATAL COMBAT            \n";
     cout << "===============================\n";
     cout << "1. Iniciar nueva partida\n";
     cout << "2. Ver mejores puntajes\n";
     cout << "3. Salir\n";
-    cout << "Seleccione una opción: ";
+    cout << "Seleccione una opcion: ";
 }
 
+// --- Nuevas funciones implementadas ---
+vector<Heroe> crearPoolHeroes() {
+    return {
+        Heroe("Cristiano Ronaldo", 60, 6, 3, 4, 1),
+        Heroe("Leo Messi", 60, 5, 4, 5, 2),
+        Heroe("Neymar Jr", 60, 7, 2, 3, 1),
+        Heroe("Toni Kroos", 65, 4, 5, 3, 2),
+        Heroe("Gareth Bale", 55, 8, 2, 6, 1),
+        Heroe("Luka Modric", 70, 3, 6, 2, 3)
+    };
+}
+
+vector<Heroe*> seleccionarHeroes(vector<Heroe>& pool) {
+    vector<Heroe*> equipo;
+    int opcion;
+
+    cout << "\n=== SELECCIONA 3 HEROES ===\n";
+    mostrarHeroesDisponibles(pool);
+
+    cout << "7. Seleccion aleatoria\n";
+
+    for (int i = 0; i < 3; ++i) {
+        cout << "Elige el heroe " << i + 1 << " (1-6 o 7 para aleatorio): ";
+        while (!(cin >> opcion) || (opcion < 1 || opcion > 7)) {
+            cout << "Opcion invalida. Elige 1-6 o 7: ";
+            limpiarBuffer();
+        }
+
+        if (opcion == 7) {
+            random_shuffle(pool.begin(), pool.end());
+            equipo.push_back(&pool[i]);
+            cout << "¡" << pool[i].getNombre() << " anadido al equipo!\n";
+        } else {
+            equipo.push_back(&pool[opcion - 1]);
+            cout << "¡" << pool[opcion - 1].getNombre() << " anadido al equipo!\n";
+        }
+    }
+    return equipo;
+}
+
+void mostrarHeroesDisponibles(const vector<Heroe>& heroes) {
+    for (size_t i = 0; i < heroes.size(); ++i) {
+        cout << i + 1 << ". ";
+        heroes[i].mostrarStats();
+    }
+}
+
+// --- Main actualizado ---
 int main() {
+    srand(time(nullptr));
+
     ScoreManager scoreManager;
-    scoreManager.cargarDesdeArchivo("scores");
+    try {
+        scoreManager.cargarDesdeArchivo("scores.txt");
+    } catch (const exception& e) {
+        cout << "\nAdvertencia: No se encontraron puntuaciones previas.\n";
+    }
 
     int opcion;
     do {
         mostrarMenuPrincipal();
-        cin >> opcion;
-        cin.ignore();
+
+        while (!(cin >> opcion)) {
+            cout << "Entrada invalida. Ingrese un numero: ";
+            limpiarBuffer();
+        }
+        limpiarBuffer();
 
         if (opcion == 1) {
             string alias;
-            cout << "Ingrese su alias: ";
+            cout << "Ingrese su alias (max 15 caracteres): ";
             getline(cin, alias);
 
-            // Crear héroes base
-            vector<Heroe*> heroes;
-            heroes.push_back(new Heroe("Aegon", 60, 6, 3, 4, 1));
-            heroes.push_back(new Heroe("Lyanna", 60, 5, 4, 5, 2));
-            heroes.push_back(new Heroe("Duncan", 60, 7, 2, 3, 1));
+            if (alias.empty()) alias = "JugadorAnonimo";
+            else if (alias.length() > 15) alias = alias.substr(0, 15);
 
-            // Mostrar stats iniciales
-            for (auto& h : heroes) {
-                h->mostrarStats();
-            }
+            // Crear pool y seleccionar héroes
+            vector<Heroe> pool = crearPoolHeroes();
+            vector<Heroe*> equipo = seleccionarHeroes(pool);
 
-            // Iniciar mazmorra
+            cout << "\n=== TU EQUIPO ===";
+            for (const auto& h : equipo) h->mostrarStats();
+
+            // Iniciar mazmorra con interacción manual
             Mazmorra mazmorra;
-            mazmorra.iniciarRecorrido(heroes);
+            int salaFinal = mazmorra.iniciarRecorrido(equipo);
 
-            // Calcular y guardar score
-            int salaMax = 10; // porque se recorrieron todas
-            int saludPerdida = calcularSaludPerdidaTotal(heroes);
-            string fecha = obtenerFechaHoraActual();
-            Score score(alias, fecha, salaMax, saludPerdida);
-            scoreManager.agregarScore(score);
-            scoreManager.guardarEnArchivo("scores");
-
-            // Liberar memoria
-            for (auto& h : heroes) delete h;
+            if (salaFinal > 0) {
+                int saludPerdida = calcularSaludPerdidaTotal(equipo);
+                scoreManager.agregarScore(Score(alias, salaFinal, saludPerdida));
+                scoreManager.guardarEnArchivo("scores.txt");
+            }
 
         } else if (opcion == 2) {
             scoreManager.mostrarTop5();
-        } else if (opcion == 3) {
-            cout << "Gracias por jugar. ¡Hasta pronto!\n";
-        } else {
-            cout << "Opción inválida. Intente nuevamente.\n";
+        } else if (opcion != 3) {
+            cout << "Opcion invalida.\n";
         }
-
     } while (opcion != 3);
 
+    cout << "\nGracias por jugar. ¡Hasta pronto!\n";
     return 0;
 }
