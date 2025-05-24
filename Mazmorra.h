@@ -2,9 +2,8 @@
 #define MAZMORRA_H
 
 #include <vector>
+#include <memory>  // Para std::unique_ptr
 #include "Sala.h"
-#include "Heroe.h"
-#include "Enemigo.h"
 
 class Mazmorra {
 private:
@@ -12,8 +11,8 @@ private:
 
 public:
     Mazmorra();
-    void iniciarRecorrido(std::vector<Heroe*>& heroes);
+    int iniciarRecorrido(std::vector<Heroe*>& heroes);
     int obtenerSalaActual() const;
 };
 
-#endif //MAZMORRA_H
+#endif // MAZMORRA_H

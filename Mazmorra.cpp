@@ -1,31 +1,51 @@
-#include <iostream>
 #include "Mazmorra.h"
-using namespace std;
+#include <iostream>
+#include <memory>
+#include <limits>
 
 Mazmorra::Mazmorra() {
-    // Crear 10 salas con distintos tipos de eventos y enemigos simulados
-    salas.push_back(Sala(1, "mercado"));
-    salas.push_back(Sala(2, "combate", new Enemigo("Goblin", "Soldado", 40, 5, 2, 3, 1)));
-    salas.push_back(Sala(3, "cofre"));
-    salas.push_back(Sala(4, "combate", new Enemigo("Orco", "Soldado", 50, 6, 2, 4, 1)));
-    salas.push_back(Sala(5, "combate", new Enemigo("Bandido", "Soldado", 55, 7, 3, 5, 2)));
-    salas.push_back(Sala(6, "tesoro"));
-    salas.push_back(Sala(7, "combate", new Enemigo("Esqueleto", "Soldado", 60, 8, 4, 6, 2)));
-    salas.push_back(Sala(8, "santoGrial"));
-    salas.push_back(Sala(9, "combate", new Enemigo("Brujo", "MiniJefe", 80, 10, 5, 7, 3)));
-    salas.push_back(Sala(10, "combate", new Enemigo("Rey Demonio", "GranJefe", 100, 12, 6, 8, 4)));
+    salas.emplace_back(1, "mercado");
+    salas.emplace_back(2, "combate", std::make_unique<Enemigo>("Goblin", "Soldado", 40, 5, 2, 3, 1));
+    salas.emplace_back(3, "cofre");
+    salas.emplace_back(4, "combate", std::make_unique<Enemigo>("Orco", "Soldado", 50, 6, 2, 4, 1));
+    salas.emplace_back(5, "combate", std::make_unique<Enemigo>("Bandido", "Soldado", 55, 7, 3, 5, 2));
+    salas.emplace_back(6, "tesoro");
+    salas.emplace_back(7, "combate", std::make_unique<Enemigo>("Esqueleto", "Soldado", 60, 8, 4, 6, 2));
+    salas.emplace_back(8, "santoGrial");
+    salas.emplace_back(9, "combate", std::make_unique<Enemigo>("Brujo", "MiniJefe", 80, 10, 5, 7, 3));
+    salas.emplace_back(10, "combate", std::make_unique<Enemigo>("Rey Demonio", "GranJefe", 100, 12, 6, 8, 4));
 }
 
-void Mazmorra::iniciarRecorrido(vector<Heroe*>& heroes) {
+int Mazmorra::iniciarRecorrido(std::vector<Heroe*>& heroes) {
+    int salaMaximaCompletada = 0;
+
     for (auto& sala : salas) {
+        // Esperar confirmación del jugador
+        std::cout << "\n--- Pulsa Enter para entrar a la Sala " << sala.getNumeroSala() << " ---";
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
         sala.iniciarSala(heroes);
-        // Cada victoria aumenta 2% ATK y DEF a cada héroe
-        for (auto& h : heroes) {
-            h->aumentarEstadisticasPorcentual(0.02f, 0.02f);
+
+        if (sala.estaCompletada()) {
+            salaMaximaCompletada = sala.getNumeroSala();
+
+            if (sala.getTipoEvento() == "combate") {
+                // Pausa después del combate
+                std::cout << "\n--- Pulsa Enter para continuar ---";
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+                // Mejora de stats
+                for (auto& heroe : heroes) {
+                    heroe->aumentarEstadisticasPorcentual(0.02f, 0.02f);
+                }
+            }
+        } else {
+            break; // Salir si la sala no se completó
         }
     }
 
-    cout << "\n¡Has completado la mazmorra!" << endl;
+    std::cout << "\n¡Has completado la mazmorra hasta la sala " << salaMaximaCompletada << "!\n";
+    return salaMaximaCompletada;
 }
 
 int Mazmorra::obtenerSalaActual() const {
@@ -34,5 +54,5 @@ int Mazmorra::obtenerSalaActual() const {
             return i + 1;
         }
     }
-    return 10; // Si todas están completadas
+    return salas.size();
 }
